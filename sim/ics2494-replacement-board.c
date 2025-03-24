@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 
 	printf("firmware %s f=%d mmcu=%s\n", fname, (int)f.frequency, f.mmcu);
 
-	avr = avr_make_mcu_by_name("attiny85");
+	avr = avr_make_mcu_by_name(f.mmcu);
 	if (!avr) {
 		fprintf(stderr, "%s: AVR '%s' not known\n", argv[0], f.mmcu);
 		exit(1);
@@ -55,9 +55,9 @@ int main(int argc, char *argv[])
 	avr_load_firmware(avr, &f);
 
 	// initialize our 'peripheral', setting the mask to allow read and write
-	i2c_eeprom_init(avr, &ee, 0xa0, 0x01, NULL, 1024);
+	i2c_eeprom_init(avr, &ee, 0x60, 0x01, NULL, 256);
 
-	i2c_eeprom_attach(avr, &ee, AVR_IOCTL_TWI_GETIRQ(0));
+//	i2c_eeprom_attach(avr, &ee, AVR_IOCTL_TWI_GETIRQ(0));
 	ee.verbose = 1;
 
 	// even if not setup at startup, activate gdb if crashing

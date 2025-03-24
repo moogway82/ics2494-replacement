@@ -1,6 +1,7 @@
 SOURCES = main.c si5351a_registers.h USI_TWI_Master.c USI_TWI_Master.h
 TARGET = ics2494-replacement.elf
 DEBUG_TARGET = ics2494-replacement.axf
+SIMAVR = ../../simavr
 
 all: ${SOURCES} ${TARGET}
 
@@ -12,7 +13,7 @@ ${TARGET}: ${SOURCES}
         -ffunction-sections -fdata-sections \
         -Wl,--relax,--gc-sections \
         -Wl,--undefined=_mmcu,--section-start=.mmcu=0x910000 \
-        -I../../simavr/sim/avr -I../simavr/sim/avr -I../../simavr/sim/avr \
+        -I${SIMAVR}/simavr/sim/avr -I${SIMAVR}/simavr/sim/avr -I${SIMAVR}/simavr/sim/avr \
         ${SOURCES} \
         -o ${TARGET}
 
@@ -27,7 +28,7 @@ ${DEBUG_TARGET}: ${SOURCES}
         -ffunction-sections -fdata-sections \
         -Wl,--relax,--gc-sections \
         -Wl,--undefined=_mmcu,--section-start=.mmcu=0x910000 \
-        -I../../simavr/sim/avr -I../simavr/sim/avr -I../../simavr/sim/avr \
+        -I${SIMAVR}/simavr/sim/avr -I${SIMAVR}/simavr/sim/avr -I${SIMAVR}/simavr/sim/avr \
         ${SOURCES} \
         -o ${DEBUG_TARGET}
 
