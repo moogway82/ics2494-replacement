@@ -34,6 +34,7 @@ ${DEBUG_TARGET}: ${SOURCES}
 sim: debug
 	simavr -g 1234 -m attiny85 ${DEBUG_TARGET}
 
-
+clean:
+	rm ics2494-replacement.axf ics2494-replacement.elf
 
 
