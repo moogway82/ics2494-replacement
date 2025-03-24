@@ -1,0 +1,42 @@
+make[2]: Entering directory '/home/chris/code/simavr/examples/board_i2ctest'
+mkdir -p obj-x86_64-linux-gnu
+echo AVR-CC atmega1280_i2ctest.c
+
+avr-gcc -Wall -gdwarf-2 -Os -std=gnu99 \
+                -mmcu=atmega1280 \
+                -DF_CPU=8000000 \
+                -fno-inline-small-functions \
+                -ffunction-sections -fdata-sections \
+                -Wl,--relax,--gc-sections \
+                -Wl,--undefined=_mmcu,--section-start=.mmcu=0x910000 \
+                -I../../simavr/sim/avr -I../simavr/sim/avr -I../../simavr/sim/avr \
+                atmega1280_i2ctest.c ../../examples/shared/twimaster.c ../../examples/shared/avr_twi_master.c ../../examples/shared/avr_twi_master.h -o atmega1280_i2ctest.axf
+
+avr-size atmega1280_i2ctest.axf|sed '1d'
+
+echo CC i2ctest.c
+
+cc --std=gnu99 -Wall -I. -I../../examples/shared -I../../examples/parts -I../../include -I../../simavr/sim -O2 -Wall -Wextra -Wno-unused-parameter -Wno-unused-result -Wno-missing-field-initializers -Wno-sign-compare -g -fPIC  -DHAVE_LIBELF=1  -MMD i2ctest.c -c -o obj-x86_64-linux-gnu/i2ctest.o
+
+echo CC ../../examples/parts/i2c_eeprom.c
+
+cc --std=gnu99 -Wall -I. -I../../examples/shared -I../../examples/parts -I../../include -I../../simavr/sim -O2 -Wall -Wextra -Wno-unused-parameter -Wno-unused-result -Wno-missing-field-initializers -Wno-sign-compare -g -fPIC  -DHAVE_LIBELF=1  -MMD ../../examples/parts/i2c_eeprom.c -c -o obj-x86_64-linux-gnu/i2c_eeprom.o
+
+echo LD obj-x86_64-linux-gnu/i2ctest.elf
+
+cc -MMD -O2 -Wall -Wextra -Wno-unused-parameter -Wno-unused-result -Wno-missing-field-initializers -Wno-sign-compare -g -fPIC  -DHAVE_LIBELF=1   -Wl,-rpath,/home/chris/code/simavr/examples/board_i2ctest/../../simavr/obj-x86_64-linux-gnu -o obj-x86_64-linux-gnu/i2ctest.elf obj-x86_64-linux-gnu/i2ctest.o obj-x86_64-linux-gnu/i2c_eeprom.o -L/home/chris/code/simavr/examples/board_i2ctest/../../simavr/obj-x86_64-linux-gnu -lsimavr -lm -lelf  
+
+echo i2ctest done
+
+make[2]: Leaving directory '/home/chris/code/simavr/examples/board_i2ctest'
+
+---- MPLAB X ---
+
+/bin/avr-gcc"   \
+    -mmcu=attiny85 \
+    -I "/opt/microchip/mplabx/v6.25/packs/Microchip/ATtiny_DFP/3.2.268/include" \
+    -B "/opt/microchip/mplabx/v6.25/packs/Microchip/ATtiny_DFP/3.2.268/gcc/dev/attiny85" \
+    -g -DDEBUG -D__MPLAB_DEBUGGER_SIMULATOR=1 -gdwarf-2  -x c -c -D__ATtiny85__  \
+    -funsigned-char \
+    -funsigned-bitfields -O1 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums \
+    -Wall -MD -MP -MF "build/default/debug/main.o.d" -MT "build/default/debug/main.o.d" -MT build/default/debug/main.o  -o build/default/debug/main.o main.c  -DXPRJ_default=default   
