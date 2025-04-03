@@ -26,15 +26,16 @@
 
 #include "sim_avr.h"
 #include "avr_twi.h"
+#include "avr_usi.h"
 #include "sim_elf.h"
 #include "sim_gdb.h"
 #include "sim_vcd_file.h"
-#include "i2c_eeprom.h"
+#include "i2c_usi_eeprom.h"
 
 avr_t * avr = NULL;
 avr_vcd_t vcd_file;
 
-i2c_eeprom_t ee;
+i2c_usi_eeprom_t ee;
 
 int main(int argc, char *argv[])
 {
@@ -55,9 +56,9 @@ int main(int argc, char *argv[])
 	avr_load_firmware(avr, &f);
 
 	// initialize our 'peripheral', setting the mask to allow read and write
-	i2c_eeprom_init(avr, &ee, 0x60, 0x01, NULL, 256);
+	i2c_usi_eeprom_init(avr, &ee, 0x60, 0x01, NULL, 256);
 
-//	i2c_eeprom_attach(avr, &ee, AVR_IOCTL_TWI_GETIRQ(0));
+	i2c_usi_eeprom_attach(avr, &ee, AVR_IOCTL_USI_GETIRQ());
 	ee.verbose = 1;
 
 	// even if not setup at startup, activate gdb if crashing
@@ -74,10 +75,10 @@ int main(int argc, char *argv[])
 	 *	Pressing "r" and "s" during the demo will start and stop recording
 	 *	the pin changes
 	 */
-//	avr_vcd_init(avr, "gtkwave_output.vcd", &vcd_file, 100000 /* usec */);
-//	avr_vcd_add_signal(&vcd_file,
-//		avr_io_getirq(avr, AVR_IOCTL_TWI_GETIRQ(0), TWI_IRQ_STATUS), 8 /* bits */ ,
-//		"TWSR" );
+	// avr_vcd_init(avr, "gtkwave_output.vcd", &vcd_file, 100000 /* usec */);
+	// avr_vcd_add_signal(&vcd_file,
+	// 	avr_io_getirq(avr, AVR_IOCTL_TWI_GETIRQ(0), TWI_IRQ_STATUS), 8 /* bits */ ,
+	// 	"TWSR" );
 
 	printf( "\nDemo launching:\n");
 
