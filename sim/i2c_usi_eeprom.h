@@ -28,6 +28,7 @@
 enum {
 	EEPROM_USI_IRQ_OUT,
 	EEPROM_USI_IRQ_IN,
+	EEPROM_USI_IRQ_SCLK,
 	EEPROM_USI_IRQ_COUNT
 };
 
@@ -50,6 +51,7 @@ enum {
  *
  */
 typedef struct i2c_usi_eeprom_t {
+	avr_t     * avr;
 	avr_irq_t *	irq;		// irq list
 	uint8_t addr_base;
 	uint8_t addr_mask;
@@ -57,6 +59,9 @@ typedef struct i2c_usi_eeprom_t {
 
 	uint8_t selected;		// selected address
 	int index;	// byte index in current transaction
+
+	uint8_t		clock_high;	// current clock phase
+	uint8_t		sda;        // current DI pin input value
 
 	uint16_t reg_addr;		// read/write address register
 	int size;				// also implies the address size, one or two byte

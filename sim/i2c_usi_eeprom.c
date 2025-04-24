@@ -24,19 +24,29 @@
 #include <stdio.h>
 #include <string.h>
 #include "sim_avr.h"
+// Todo: Get rid of TWI code...
 #include "avr_twi.h"
 #include "avr_usi.h"
 #include "i2c_usi_eeprom.h"
+#include "avr_ioport.h"
+
+
+#if 1
+#define DBG(x) x
+#else
+#define DBG(x)
+#endif
+
 
 
 static const char * _ee_irq_names[EEPROM_USI_IRQ_COUNT] = {
 		[EEPROM_USI_IRQ_OUT] = "32<eeprom_usi.in",
-		[EEPROM_USI_IRQ_IN] = "8>eeprom_usi.out"
-
+		[EEPROM_USI_IRQ_IN] = "8>eeprom_usi.out",
+		[EEPROM_USI_IRQ_SCLK] = "=eeptom_usi.clk"
 };	
 
 /*
- * called when a RESET signal is sent
+ * called when a bit is clocked out of the USI Data Register
  */
 static void
 i2c_usi_eeprom_in_hook(
@@ -47,6 +57,10 @@ i2c_usi_eeprom_in_hook(
 	i2c_usi_eeprom_t * p = (i2c_usi_eeprom_t*)param;
 	avr_twi_msg_irq_t v;
 	v.u.v = value;
+
+	p->sda = value & 0x1 ? 1 : 0;
+	DBG(printf("EEP ------------------- USI_IRQ_DO IRQ: p->sda = %d \n", p->sda));
+
 
 	/*
 	 * If we receive a STOP, check it was meant to us, and reset the transaction
@@ -123,6 +137,34 @@ i2c_usi_eeprom_in_hook(
 	}
 }
 
+
+// USI_IRQ_USCK
+static void
+i2c_usi_eeprom_clk_hook(
+	struct avr_irq_t * irq,
+	uint32_t value,
+	void * param)
+{
+	i2c_usi_eeprom_t * p = (i2c_usi_eeprom_t*) param;
+	uint8_t old_clock = p->clock_high;
+	//if(value & AVR_IOPORT_OUTPUT) {
+		p->clock_high = value & 0x1 ? 1 : 0;
+	//}
+
+	DBG(printf("EEP ------------------- USI_IRQ_USCK IRQ: p->clock_high = %d \n", p->clock_high));
+	if(p->clock_high != old_clock) {
+		if(p->clock_high == 1) {
+			DBG(printf("EEP -------------------     Rising Edge \n"));
+		} else {
+			DBG(printf("EEP -------------------     Falling Edge \n"));
+		}
+	}
+
+
+	// printf("I2C Clocked, value: %04x \n", value);
+	// printf("EEPROM SCLK Pin State: %01x \n", p->clock_high);
+}
+
 void
 i2c_usi_eeprom_init(
 		struct avr_t * avr,
@@ -135,11 +177,17 @@ i2c_usi_eeprom_init(
 	memset(p, 0, sizeof(*p));
 	memset(p->ee, 0xff, sizeof(p->ee));
 
+	p->avr = avr;
 	p->addr_base = addr;
 	p->addr_mask = mask;
 
-	p->irq = avr_alloc_irq(&avr->irq_pool, 0, 2, _ee_irq_names);
+	// TODO: Set the Clock value and SDA value to whatever the mcu pins are set to...
+	p->clock_high = 1; // Pulling high so start high?
+	p->sda = 1;	
+
+	p->irq = avr_alloc_irq(&avr->irq_pool, 0, EEPROM_USI_IRQ_COUNT, _ee_irq_names);
 	avr_irq_register_notify(p->irq + EEPROM_USI_IRQ_IN, i2c_usi_eeprom_in_hook, p);
+	avr_irq_register_notify(p->irq + EEPROM_USI_IRQ_SCLK, i2c_usi_eeprom_clk_hook, p);
 
 	p->size = size > sizeof(p->ee) ? sizeof(p->ee) : size;
 	if (data)
@@ -154,10 +202,16 @@ i2c_usi_eeprom_attach(
 {
 	// connect the IRQs of the eeprom to the TWI/i2c master of the AVR
 	avr_connect_irq(
-		// I think this connects up the 
+		// Connect the DI of the USI module to the Data out of the EEPROM
 		p->irq + EEPROM_USI_IRQ_OUT,
 		avr_io_getirq(avr, i2c_irq_base, USI_IRQ_DI)); // ATTiny85 doesn't have a dedicated TWI module, but the USI which can run as TWI
+		// Connect the DO of the USI module to the Data In of the EEPROM
 	avr_connect_irq(
 		avr_io_getirq(avr, i2c_irq_base, USI_IRQ_DO),
 		p->irq + EEPROM_USI_IRQ_IN );
+		// Connect the CLK IRQ with the Eeprom Clk int
+	avr_connect_irq(
+		avr_io_getirq(avr, i2c_irq_base, USI_IRQ_USCK),
+		p->irq + EEPROM_USI_IRQ_SCLK );
+
 }

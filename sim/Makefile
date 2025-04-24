@@ -6,24 +6,24 @@ SIMAVR = ../../simavr
 all: ics2494-replacement-board.elf ics2494-replacement-board.c i2c_usi_eeprom.c
 
 ics2494-replacement-board.elf: ics2494-replacement-board.o i2c_usi_eeprom.o
-	cc -MMD -O2 -gdwarf-2  \
+	cc -MMD -O0 -gdwarf-2  \
 		-Wall -Wextra -Wno-unused-parameter -Wno-unused-result -Wno-missing-field-initializers -Wno-sign-compare \
 		-g -fPIC  -DHAVE_LIBELF=1   \
-		-Wl,-rpath,${SIMAVR}/obj-x86_64-linux-gnu \
-		-o ics2494-replacement-board.elf ics2494-replacement-board.o i2c_usi_eeprom.o \
-		-L/${SIMAVR}/obj-x86_64-linux-gnu -lsimavr -lm -lelf 
+		-Wl,-rpath,${SIMAVR}/simavr/obj-x86_64-linux-gnu \
+		-o ics2494-replacement-board.elf ics2494-replacement-board.o i2c_usi_eeprom.o ${SIMAVR}/simavr/obj-x86_64-linux-gnu/avr_usi.o \
+		-L/${SIMAVR}/simavr/obj-x86_64-linux-gnu -lsimavr -lm -lelf 
 
 ics2494-replacement-board.o: ics2494-replacement-board.c
 	cc --std=gnu99 -Wall -gdwarf-2 \
 		-I. -I/include -I${SIMAVR}/examples/parts -I${SIMAVR}/include -I${SIMAVR}/simavr/sim \
-		-O2 -Wall -Wextra -Wno-unused-parameter -Wno-unused-result -Wno-missing-field-initializers -Wno-sign-compare \
+		-O0 -Wall -Wextra -Wno-unused-parameter -Wno-unused-result -Wno-missing-field-initializers -Wno-sign-compare \
 		-g -fPIC  -DHAVE_LIBELF=1  -MMD ics2494-replacement-board.c -c \
 		-o ics2494-replacement-board.o
 
 i2c_usi_eeprom.o: i2c_usi_eeprom.c
 	cc --std=gnu99 -Wall -gdwarf-2  \
 		-I. -I/include -I${SIMAVR}/examples/parts -I${SIMAVR}/include -I${SIMAVR}/simavr/sim \
-		-O2 -Wall -Wextra -Wno-unused-parameter -Wno-unused-result -Wno-missing-field-initializers -Wno-sign-compare \
+		-O0 -Wall -Wextra -Wno-unused-parameter -Wno-unused-result -Wno-missing-field-initializers -Wno-sign-compare \
 		-g -fPIC  -DHAVE_LIBELF=1  -MMD i2c_usi_eeprom.c -c -o i2c_usi_eeprom.o
 
 
