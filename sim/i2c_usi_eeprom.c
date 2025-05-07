@@ -48,6 +48,23 @@ static const char * _ee_irq_names[EEPROM_USI_IRQ_COUNT] = {
 /*
  * called when a bit is clocked out of the USI Data Register
  */
+
+
+// static void i2c_usi_eeprom_out_hook(struct avr_irq_t * irq,
+// 		uint32_t value,
+// 		void * param)
+// {
+// 	i2c_usi_eeprom_t * p = (i2c_usi_eeprom_t*) param;
+// 	p->sda = value & 0x1 ? 1 : 0;
+// 	DBG(printf("EEP ------------------- USI_IRQ_DI IRQ: p->sda = %d \n", p->sda));
+// }
+
+
+// TODO: I need another Hook to track all the changes on the SDA pin as this is only called when USIDR bit is 
+// 		 transferred out and doesn't catch when the Start Condition is set...
+//		Yeah this isn't being called when the USI_IRQ_DI IRQ is triggered, only the USI_IRQ_DO, which was what
+//		We wanted in a way as kept the communication simple - USI DO = EEP DI, EEP DO = USI DI, etc... But now we have
+//		- "PORTB DO = USI DI", and should be "PORTB DO = USI DI + EEP DI" so that they both keep check...
 static void
 i2c_usi_eeprom_in_hook(
 		struct avr_irq_t * irq,
@@ -55,86 +72,94 @@ i2c_usi_eeprom_in_hook(
 		void * param)
 {
 	i2c_usi_eeprom_t * p = (i2c_usi_eeprom_t*)param;
-	avr_twi_msg_irq_t v;
-	v.u.v = value;
+	// avr_twi_msg_irq_t v;
+	// v.u.v = value;
 
 	p->sda = value & 0x1 ? 1 : 0;
-	DBG(printf("EEP ------------------- USI_IRQ_DO IRQ: p->sda = %d \n", p->sda));
+	DBG(printf("EEP ------------------- USI_IRQ_DI IRQ: p->sda = %d \n", p->sda));
+
+	// Detect Start Condition: SDA LOW & CLK HIGH when IDLE
+	if(!(p->state & (1 << EEPROM_USI_START))) {
+		if(p->sda == 0 && p->clock_high == 1) {
+			p->state |= (1 << EEPROM_USI_START);
+			DBG(printf("EEP ------------------- 	Start Condition Detected: p->state = %d \n", p->state));
+		}
+	}
 
 
-	/*
-	 * If we receive a STOP, check it was meant to us, and reset the transaction
-	 */
-	if (v.u.twi.msg & TWI_COND_STOP) {
-		if (p->selected) {
-			// it was us !
-			if (p->verbose)
-				printf("eeprom received stop\n");
-		}
-		p->selected = 0;
-		p->index = 0;
-		p->reg_addr = 0;
-	}
-	/*
-	 * if we receive a start, reset status, check if the slave address is
-	 * meant to be us, and if so reply with an ACK bit
-	 */
-	if (v.u.twi.msg & TWI_COND_START) {
-		p->selected = 0;
-		p->index = 0;
-		if ((p->addr_base & ~p->addr_mask) == (v.u.twi.addr & ~p->addr_mask)) {
-			// it's us !
-			if (p->verbose)
-				printf("eeprom received start\n");
-			p->selected = v.u.twi.addr;
-			avr_raise_irq(p->irq + EEPROM_USI_IRQ_OUT,  // Call the IRQ: USI_IRQ_DI if possible...
-					avr_twi_irq_msg(TWI_COND_ACK, p->selected, 1));
-		}
-	}
-	/*
-	 * If it's a data transaction, first check it is meant to be us (we
-	 * received the correct address and are selected)
-	 */
-	if (p->selected) {
-		/*
-		 * This is a write transaction, first receive as many address bytes
-		 * as we need, then set the address register, then start
-		 * writing data,
-		 */
-		if (v.u.twi.msg & TWI_COND_WRITE) {
-			// address size is how many bytes we use for address register
-			avr_raise_irq(p->irq + TWI_IRQ_INPUT,
-					avr_twi_irq_msg(TWI_COND_ACK, p->selected, 1));
-			int addr_size = p->size > 256 ? 2 : 1;
-			if (p->index < addr_size) {
-				p->reg_addr |= (v.u.twi.data << (p->index * 8));
-				if (p->index == addr_size-1) {
-					// add the slave address, if relevant
-					p->reg_addr += ((p->selected & 1) - p->addr_base) << 7;
-					if (p->verbose)
-						printf("eeprom set address to 0x%04x\n", p->reg_addr);
-				}
-			} else {
-				if (p->verbose)
-					printf("eeprom WRITE data 0x%04x: %02x\n", p->reg_addr, v.u.twi.data);
-				p->ee[p->reg_addr++] = v.u.twi.data;
-			}
-			p->reg_addr &= (p->size -1);
-			p->index++;
-		}
-		/*
-		 * It's a read transaction, just send the next byte back to the master
-		 */
-		if (v.u.twi.msg & TWI_COND_READ) {
-			if (p->verbose)
-				printf("eeprom READ data 0x%04x: %02x\n", p->reg_addr, p->ee[p->reg_addr]);
-			uint8_t data = p->ee[p->reg_addr++];
-			avr_raise_irq(p->irq + EEPROM_USI_IRQ_OUT,
-					avr_twi_irq_msg(TWI_COND_READ, p->selected, data));
-			p->reg_addr &= (p->size -1);
-			p->index++;
-		}
-	}
+	// /*
+	//  * If we receive a STOP, check it was meant to us, and reset the transaction
+	//  */
+	// if (v.u.twi.msg & TWI_COND_STOP) {
+	// 	if (p->selected) {
+	// 		// it was us !
+	// 		if (p->verbose)
+	// 			printf("eeprom received stop\n");
+	// 	}
+	// 	p->selected = 0;
+	// 	p->index = 0;
+	// 	p->reg_addr = 0;
+	// }
+	// /*
+	//  * if we receive a start, reset status, check if the slave address is
+	//  * meant to be us, and if so reply with an ACK bit
+	//  */
+	// if (v.u.twi.msg & TWI_COND_START) {
+	// 	p->selected = 0;
+	// 	p->index = 0;
+	// 	if ((p->addr_base & ~p->addr_mask) == (v.u.twi.addr & ~p->addr_mask)) {
+	// 		// it's us !
+	// 		if (p->verbose)
+	// 			printf("eeprom received start\n");
+	// 		p->selected = v.u.twi.addr;
+	// 		avr_raise_irq(p->irq + EEPROM_USI_IRQ_OUT,  // Call the IRQ: USI_IRQ_DI if possible...
+	// 				avr_twi_irq_msg(TWI_COND_ACK, p->selected, 1));
+	// 	}
+	// }
+	// /*
+	//  * If it's a data transaction, first check it is meant to be us (we
+	//  * received the correct address and are selected)
+	//  */
+	// if (p->selected) {
+	// 	/*
+	// 	 * This is a write transaction, first receive as many address bytes
+	// 	 * as we need, then set the address register, then start
+	// 	 * writing data,
+	// 	 */
+	// 	if (v.u.twi.msg & TWI_COND_WRITE) {
+	// 		// address size is how many bytes we use for address register
+	// 		avr_raise_irq(p->irq + TWI_IRQ_INPUT,
+	// 				avr_twi_irq_msg(TWI_COND_ACK, p->selected, 1));
+	// 		int addr_size = p->size > 256 ? 2 : 1;
+	// 		if (p->index < addr_size) {
+	// 			p->reg_addr |= (v.u.twi.data << (p->index * 8));
+	// 			if (p->index == addr_size-1) {
+	// 				// add the slave address, if relevant
+	// 				p->reg_addr += ((p->selected & 1) - p->addr_base) << 7;
+	// 				if (p->verbose)
+	// 					printf("eeprom set address to 0x%04x\n", p->reg_addr);
+	// 			}
+	// 		} else {
+	// 			if (p->verbose)
+	// 				printf("eeprom WRITE data 0x%04x: %02x\n", p->reg_addr, v.u.twi.data);
+	// 			p->ee[p->reg_addr++] = v.u.twi.data;
+	// 		}
+	// 		p->reg_addr &= (p->size -1);
+	// 		p->index++;
+	// 	}
+	// 	/*
+	// 	 * It's a read transaction, just send the next byte back to the master
+	// 	 */
+	// 	if (v.u.twi.msg & TWI_COND_READ) {
+	// 		if (p->verbose)
+	// 			printf("eeprom READ data 0x%04x: %02x\n", p->reg_addr, p->ee[p->reg_addr]);
+	// 		uint8_t data = p->ee[p->reg_addr++];
+	// 		avr_raise_irq(p->irq + EEPROM_USI_IRQ_OUT,
+	// 				avr_twi_irq_msg(TWI_COND_READ, p->selected, data));
+	// 		p->reg_addr &= (p->size -1);
+	// 		p->index++;
+	// 	}
+	// }
 }
 
 
@@ -147,14 +172,43 @@ i2c_usi_eeprom_clk_hook(
 {
 	i2c_usi_eeprom_t * p = (i2c_usi_eeprom_t*) param;
 	uint8_t old_clock = p->clock_high;
-	//if(value & AVR_IOPORT_OUTPUT) {
-		p->clock_high = value & 0x1 ? 1 : 0;
-	//}
+	p->clock_high = value & 0x1 ? 1 : 0;
 
 	DBG(printf("EEP ------------------- USI_IRQ_USCK IRQ: p->clock_high = %d \n", p->clock_high));
 	if(p->clock_high != old_clock) {
 		if(p->clock_high == 1) {
 			DBG(printf("EEP -------------------     Rising Edge \n"));
+			// Clock in a bit sampled on SDA pin
+			p->counter--;
+			p->data_in |= p->sda << p->counter;
+			DBG(printf("EEP -------------------     Set bit %d to %d in buffer, so data_in = %#04x \n", p->counter, p->sda, p->data_in));
+			
+			// Byte received:
+			if(p->counter == 0) {
+				p->counter = 8; // reset counter for next byte;
+				DBG(printf("EEP -------------------     Full byte recieved: data_in = %#04x \n", p->data_in));
+				if(p->state & (1 << EEPROM_USI_START)) { 
+					if(!(p->state & (1 << EEPROM_USI_ADDRESSED))) { // Device not addressed
+						if((p->data_in >> 1) == p->addr_base) {
+							p->state |= (1 << EEPROM_USI_ADDRESSED);
+							DBG(printf("EEP -------------------     Address %#04x matches, EEPROM_USI_ADDRESSED state to %#02x \n", p->data_in >> 1, p->state & (1 << EEPROM_USI_ADDRESSED) ? 1 : 0));
+							if(p->data_in & 0x1) {
+								p->state |= (1 << EEPROM_USI_WRITEBIT);
+							} else {
+								p->state &= ~(1 << EEPROM_USI_WRITEBIT);
+							}
+							DBG(printf("EEP -------------------     Write bit set to %#02x \n", p->state & (1 << EEPROM_USI_WRITEBIT) ? 1 : 0));
+							// Sent ACK bit
+							avr_raise_irq(p->irq + EEPROM_USI_IRQ_OUT, 0);
+						} else {
+							DBG(printf("EEP -------------------     Address %#04x not match, state back to EPROM_USI_IDLE \n", p->data_in >> 1));
+
+						}
+					} else { // Device is addressed
+						DBG(printf("EEP -------------------     Great got another byte  %#04x...", p->data_in));
+					}
+				}
+			}
 		} else {
 			DBG(printf("EEP -------------------     Falling Edge \n"));
 		}
@@ -184,6 +238,10 @@ i2c_usi_eeprom_init(
 	// TODO: Set the Clock value and SDA value to whatever the mcu pins are set to...
 	p->clock_high = 1; // Pulling high so start high?
 	p->sda = 1;	
+	p->data_in = 0;
+	p->counter = 8; // lets count down as it MSB first.
+	p->state = 0;
+
 
 	p->irq = avr_alloc_irq(&avr->irq_pool, 0, EEPROM_USI_IRQ_COUNT, _ee_irq_names);
 	avr_irq_register_notify(p->irq + EEPROM_USI_IRQ_IN, i2c_usi_eeprom_in_hook, p);
@@ -208,6 +266,10 @@ i2c_usi_eeprom_attach(
 		// Connect the DO of the USI module to the Data In of the EEPROM
 	avr_connect_irq(
 		avr_io_getirq(avr, i2c_irq_base, USI_IRQ_DO),
+		p->irq + EEPROM_USI_IRQ_IN );
+		// Connect the CLK IRQ with the Eeprom Clk int
+	avr_connect_irq(
+		avr_io_getirq(avr, i2c_irq_base, USI_IRQ_DI),
 		p->irq + EEPROM_USI_IRQ_IN );
 		// Connect the CLK IRQ with the Eeprom Clk int
 	avr_connect_irq(

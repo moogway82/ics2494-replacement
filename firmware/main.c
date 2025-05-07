@@ -160,6 +160,7 @@ unsigned int send_5351_configuration(uint8_t config) {
     
     finish:
       asm("nop");
+      return 0;
 }
 
 uint8_t read_cs_pins() {

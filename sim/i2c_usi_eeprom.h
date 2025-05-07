@@ -32,6 +32,13 @@ enum {
 	EEPROM_USI_IRQ_COUNT
 };
 
+// Flags on the bits of the status byte
+enum {
+	EEPROM_USI_START, // b0 1 = Start bit detected, 0 = Stop bit detected / Idle
+	EEPROM_USI_ADDRESSED, // b1 1 = Addressed, 0 = Not Addressed
+	EEPROM_USI_WRITEBIT, // b2 1 = Write mode, 0 = Read mode
+};
+
 /*
  * This is a generic i2c eeprom; it can be up to 4096 bytes, and can work
  * in two modes :
@@ -62,6 +69,9 @@ typedef struct i2c_usi_eeprom_t {
 
 	uint8_t		clock_high;	// current clock phase
 	uint8_t		sda;        // current DI pin input value
+	uint8_t		data_in;	// What's being read
+	uint8_t 	counter; 	// no clocks counted
+	uint8_t 	state;		// IDLE or BUSY
 
 	uint16_t reg_addr;		// read/write address register
 	int size;				// also implies the address size, one or two byte
