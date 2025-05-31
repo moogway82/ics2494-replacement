@@ -164,6 +164,14 @@ i2c_usi_eeprom_in_hook(
 
 
 // USI_IRQ_USCK
+/* NOTES:
+	31/5/25 - Puzzling how to send the ACK bit. When address is matched, I'm immediately pulling SDA LOW, but it looks like the
+	USI sub-system then sets SDA after as the register is still being clocked... It shouldn't be setting SDA, or shouldn't care as
+	the direction gets changed by Firmware, so it shouldn't be outputting, only input - but how do I record an input? I'm getting a
+	bit lost, could do with backing up and going over the basics of how SDA is clocked and set by the 3 parties here: USI subsys,
+	Firmware and Simulated EEPROM - defo a communication problem going on. I think the answer is a hook from EEPROM to tell the USI
+	subsystem to get the input here or something. Another time... 
+*/
 static void
 i2c_usi_eeprom_clk_hook(
 	struct avr_irq_t * irq,
@@ -200,12 +208,14 @@ i2c_usi_eeprom_clk_hook(
 							DBG(printf("EEP -------------------     Write bit set to %#02x \n", p->state & (1 << EEPROM_USI_WRITEBIT) ? 1 : 0));
 							// Sent ACK bit
 							avr_raise_irq(p->irq + EEPROM_USI_IRQ_OUT, 0);
+							DBG(printf("EEP -------------------     Raised EEPROM_USI_IRQ_OUT with value 0 to send the ACK bit \n"));
+
 						} else {
 							DBG(printf("EEP -------------------     Address %#04x not match, state back to EPROM_USI_IDLE \n", p->data_in >> 1));
 
 						}
 					} else { // Device is addressed
-						DBG(printf("EEP -------------------     Great got another byte  %#04x...", p->data_in));
+						DBG(printf("EEP -------------------     Great got another byte  %#04x... \n", p->data_in));
 					}
 				}
 			}
