@@ -27,9 +27,12 @@ ${FILENAME}.elf: ${SOURCES}
         -o ${FILENAME}.elf
 
 	avr-size ${FILENAME}.elf
+	avr-objdump -d ${FILENAME}.elf > ${FILENAME}.lst
+	avr-objdump -j .data -s ${FILENAME}.elf >> ${FILENAME}.lst
 
 ${TARGET}: ${FILENAME}.elf
 	avr-objcopy -O ihex ${FILENAME}.elf ${TARGET}
+
 
 debug:${DEBUG_TARGET}
 
