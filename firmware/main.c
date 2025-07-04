@@ -12,8 +12,8 @@
 #define MESSAGEBUF_SIZE 3
 
 // for linker, emulator, and programmer's sake
-#include "avr_mcu_section.h"
-AVR_MCU(F_CPU, "attiny85");
+// #include "avr_mcu_section.h"
+// AVR_MCU(F_CPU, "attiny85");
 
 unsigned int send_5351_configuration(uint8_t config);
 uint8_t read_cs_pins();

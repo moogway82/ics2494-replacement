@@ -68,8 +68,8 @@ si5351a_revb_register_t const si5351a_revb_init_registers[SI5351A_REVB_FULL_REG_
 
 si5351a_revb_register_t const si5351a_revb_registers[8][SI5351A_REVB_DELTA_REG_CONFIG_NUM_REGS] = {
     { // 0
-    { 0x10, 0x0F },
-    { 0x11, 0x0F },
+        { 0x10, 0x0F },
+        { 0x11, 0x0F },
         { 0x1A,0x00 }, 
         { 0x1B,0x19 }, 
         { 0x1D,0x0F }, 
@@ -91,8 +91,8 @@ si5351a_revb_register_t const si5351a_revb_registers[8][SI5351A_REVB_DELTA_REG_C
 
     },
     { // 1
-            { 0x10, 0x0F },
-    { 0x11, 0x0F },
+        { 0x10, 0x0F },
+        { 0x11, 0x0F },
         { 0x1A,0x30 }, 
         { 0x1B,0xD4 }, 
         { 0x1D,0x0F }, 
@@ -113,8 +113,8 @@ si5351a_revb_register_t const si5351a_revb_registers[8][SI5351A_REVB_DELTA_REG_C
         { 0x39,0x20 }
     },
     { // 2
-            { 0x10, 0x0F },
-    { 0x11, 0x0F },
+        { 0x10, 0x0F },
+        { 0x11, 0x0F },
         { 0x1A,0x13 }, 
         { 0x1B,0x88 }, 
         { 0x1D,0x0F }, 
@@ -135,8 +135,8 @@ si5351a_revb_register_t const si5351a_revb_registers[8][SI5351A_REVB_DELTA_REG_C
         { 0x39,0x40 }
     },
     { // 3
-            { 0x10, 0x0F },
-    { 0x11, 0x0F },
+        { 0x10, 0x0F },
+        { 0x11, 0x0F },
         { 0x1A,0x00 }, 
         { 0x1B,0x19 }, 
         { 0x1D,0x0F }, 
@@ -157,8 +157,8 @@ si5351a_revb_register_t const si5351a_revb_registers[8][SI5351A_REVB_DELTA_REG_C
         { 0x39,0x00 }
     },
     { // 4
-            { 0x10, 0x0F },
-    { 0x11, 0x0F },
+        { 0x10, 0x0F },
+        { 0x11, 0x0F },
         { 0x1A,0x00 }, 
         { 0x1B,0x05 }, 
         { 0x1D,0x0E }, 
@@ -179,8 +179,8 @@ si5351a_revb_register_t const si5351a_revb_registers[8][SI5351A_REVB_DELTA_REG_C
         { 0x39,0x00 }
     },
     { // 5
-            { 0x10, 0x0F },
-    { 0x11, 0x0F },
+        { 0x10, 0x0F },
+        { 0x11, 0x0F },
         { 0x1A,0x00 }, 
         { 0x1B,0x19 }, 
         { 0x1D,0x0F }, 
@@ -201,8 +201,8 @@ si5351a_revb_register_t const si5351a_revb_registers[8][SI5351A_REVB_DELTA_REG_C
         { 0x39,0x10 }
     },
     { // 6
-            { 0x10, 0x0F },
-    { 0x11, 0x0F },
+        { 0x10, 0x0F },
+        { 0x11, 0x0F },
         { 0x1A,0x00 }, 
         { 0x1B,0x01 }, 
         { 0x1D,0x10 }, 
@@ -223,8 +223,8 @@ si5351a_revb_register_t const si5351a_revb_registers[8][SI5351A_REVB_DELTA_REG_C
         { 0x39,0x02 }
     },
     { // 7
-            { 0x10, 0x0F },
-    { 0x11, 0x0F },
+        { 0x10, 0x0F },
+        { 0x11, 0x0F },
         { 0x1A,0x00 }, 
         { 0x1B,0x19 }, 
         { 0x1D,0x0F }, 
