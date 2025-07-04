@@ -79,9 +79,9 @@ i2c_usi_eeprom_in_hook(
 	DBG(printf("EEP ------------------- USI_IRQ_DI IRQ: p->sda = %d \n", p->sda));
 
 	// Detect Start Condition: SDA LOW & CLK HIGH when IDLE
-	if(!(p->state & (1 << EEPROM_USI_START))) {
+	if(!(p->state & EEPROM_USI_COND_START)) {
 		if(p->sda == 0 && p->clock_high == 1) {
-			p->state |= (1 << EEPROM_USI_START);
+			p->state |= EEPROM_USI_COND_START;
 			DBG(printf("EEP ------------------- 	Start Condition Detected: p->state = %d \n", p->state));
 		}
 	}
@@ -164,7 +164,7 @@ i2c_usi_eeprom_in_hook(
 
 
 // USI_IRQ_USCK
-/* NOTES:
+/* TODO:
 	31/5/25 - Puzzling how to send the ACK bit. When address is matched, I'm immediately pulling SDA LOW, but it looks like the
 	USI sub-system then sets SDA after as the register is still being clocked... It shouldn't be setting SDA, or shouldn't care as
 	the direction gets changed by Firmware, so it shouldn't be outputting, only input - but how do I record an input? I'm getting a
@@ -183,6 +183,7 @@ i2c_usi_eeprom_clk_hook(
 	p->clock_high = value & 0x1 ? 1 : 0;
 
 	DBG(printf("EEP ------------------- USI_IRQ_USCK IRQ: p->clock_high = %d \n", p->clock_high));
+	// RISING EDGE - sample
 	if(p->clock_high != old_clock) {
 		if(p->clock_high == 1) {
 			DBG(printf("EEP -------------------     Rising Edge \n"));
@@ -194,33 +195,40 @@ i2c_usi_eeprom_clk_hook(
 			// Byte received:
 			if(p->counter == 0) {
 				p->counter = 8; // reset counter for next byte;
-				DBG(printf("EEP -------------------     Full byte recieved: data_in = %#04x \n", p->data_in));
-				if(p->state & (1 << EEPROM_USI_START)) { 
-					if(!(p->state & (1 << EEPROM_USI_ADDRESSED))) { // Device not addressed
+				p->state |= EEPROM_USI_COND_BYTEIN;
+				DBG(printf("EEP -------------------     Full byte recieved: data_in = %#04x, state = %#04x \n", p->data_in, p->state));
+			}
+
+		// FALLING EDGE - act
+		} else {
+			DBG(printf("EEP -------------------     Falling Edge \n"));
+			// Send ACK
+			//if(p->state & EEPROM_USI_COND_START) { // Started
+				if(p->state & EEPROM_USI_COND_BYTEIN) { // Byte In
+					// Have we been addressed yet?
+					if(!(p->state & EEPROM_USI_COND_ADDR)) {
 						if((p->data_in >> 1) == p->addr_base) {
-							p->state |= (1 << EEPROM_USI_ADDRESSED);
-							DBG(printf("EEP -------------------     Address %#04x matches, EEPROM_USI_ADDRESSED state to %#02x \n", p->data_in >> 1, p->state & (1 << EEPROM_USI_ADDRESSED) ? 1 : 0));
+							p->state |= EEPROM_USI_COND_ADDR;
+							DBG(printf("EEP -------------------     Address %#04x matches, EEPROM_USI_ADDRESSED state to %#02x \n", p->data_in >> 1, p->state & EEPROM_USI_COND_ADDR ? 1 : 0));
 							if(p->data_in & 0x1) {
-								p->state |= (1 << EEPROM_USI_WRITEBIT);
+								p->state |= EEPROM_USI_COND_WRITE;
 							} else {
-								p->state &= ~(1 << EEPROM_USI_WRITEBIT);
+								p->state &= ~EEPROM_USI_COND_WRITE;
 							}
-							DBG(printf("EEP -------------------     Write bit set to %#02x \n", p->state & (1 << EEPROM_USI_WRITEBIT) ? 1 : 0));
+							DBG(printf("EEP -------------------     Write bit set to %#02x \n", p->state & EEPROM_USI_COND_WRITE ? 1 : 0));
 							// Sent ACK bit
 							avr_raise_irq(p->irq + EEPROM_USI_IRQ_OUT, 0);
 							DBG(printf("EEP -------------------     Raised EEPROM_USI_IRQ_OUT with value 0 to send the ACK bit \n"));
 
 						} else {
 							DBG(printf("EEP -------------------     Address %#04x not match, state back to EPROM_USI_IDLE \n", p->data_in >> 1));
-
 						}
-					} else { // Device is addressed
+					// Been addressed so lets process bytes
+					} else {
 						DBG(printf("EEP -------------------     Great got another byte  %#04x... \n", p->data_in));
 					}
 				}
-			}
-		} else {
-			DBG(printf("EEP -------------------     Falling Edge \n"));
+			//}
 		}
 	}
 

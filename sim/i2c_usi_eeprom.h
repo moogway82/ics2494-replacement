@@ -33,10 +33,25 @@ enum {
 };
 
 // Flags on the bits of the status byte
+// enum {
+// 	EEPROM_USI_START, // b0 1 = Start bit detected, 0 = Stop bit detected / Idle
+// 	EEPROM_USI_ADDRESSED, // b1 1 = Addressed, 0 = Not Addressed
+// 	EEPROM_USI_WRITEBIT, // b2 1 = Write mode, 0 = Read mode
+// };
+
 enum {
-	EEPROM_USI_START, // b0 1 = Start bit detected, 0 = Stop bit detected / Idle
-	EEPROM_USI_ADDRESSED, // b1 1 = Addressed, 0 = Not Addressed
-	EEPROM_USI_WRITEBIT, // b2 1 = Write mode, 0 = Read mode
+	// Start bit recieved
+	EEPROM_USI_COND_START = (1 << 0),
+	// Stop bit recieved
+	EEPROM_USI_COND_STOP = (1 << 1),
+	// 
+	EEPROM_USI_COND_ADDR = (1 << 2),
+	EEPROM_USI_COND_ACK = (1 << 3),
+	EEPROM_USI_COND_WRITE = (1 << 4),
+	EEPROM_USI_COND_READ = (1 << 5),
+	// internal state, do not use in irq messages
+	EEPROM_USI_COND_SLAVE	= (1 << 6),
+	EEPROM_USI_COND_BYTEIN	= (1 << 7),
 };
 
 /*

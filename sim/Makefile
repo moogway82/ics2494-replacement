@@ -29,4 +29,3 @@ i2c_usi_eeprom.o: i2c_usi_eeprom.c
 
 clean:
 	rm ics2494-replacement-board.o i2c_usi_eeprom.o ics2494-replacement-board.elf ics2494-replacement-board.d i2c_usi_eeprom.d
-
