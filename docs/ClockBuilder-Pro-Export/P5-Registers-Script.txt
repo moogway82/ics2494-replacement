@@ -1,0 +1,60 @@
+# Si535x Registers Script
+# 
+# Part: Si5351A
+# Project File: C:\users\chris\Desktop\Documents\Projects\XTjr\ET4000-CS-C.slabtimeproj
+# Includes Pre/Post Download Control Register Writes: Yes
+# Creator: ClockBuilder Pro v3.0 [2020-11-15]
+# Created On: 2025-03-16 10:47:58 GMT+00:00
+# Address,Data
+2,53h
+3,00h
+4,20h
+7,00h
+15,00h
+16,0Fh
+17,0Fh
+18,8Ch
+19,8Ch
+20,8Ch
+21,8Ch
+22,8Ch
+23,8Ch
+26,00h
+27,05h
+28,00h
+29,0Eh
+30,CCh
+31,00h
+32,00h
+33,04h
+42,00h
+43,02h
+44,00h
+45,03h
+46,40h
+47,00h
+48,00h
+49,00h
+50,00h
+51,01h
+52,00h
+53,05h
+54,80h
+55,00h
+56,00h
+57,00h
+90,00h
+91,00h
+149,00h
+150,00h
+151,00h
+152,00h
+153,00h
+154,00h
+155,00h
+162,00h
+163,00h
+164,00h
+165,00h
+166,00h
+183,92h

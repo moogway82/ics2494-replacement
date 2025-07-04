@@ -45,11 +45,11 @@ int main(int argc, char *argv[])
 	printf("Firmware pathname is %s\n", fname);
 	elf_read_firmware(fname, &f);
 
-	printf("firmware %s f=%d mmcu=%s\n", fname, (int)f.frequency, f.mmcu);
+	printf("firmware %s f=%d", fname, (int)f.frequency);
 
-	avr = avr_make_mcu_by_name(f.mmcu);
+	avr = avr_make_mcu_by_name("attiny85");
 	if (!avr) {
-		fprintf(stderr, "%s: AVR '%s' not known\n", argv[0], f.mmcu);
+		fprintf(stderr, "%s: AVR not known\n", argv[0]);
 		exit(1);
 	}
 	avr_init(avr);

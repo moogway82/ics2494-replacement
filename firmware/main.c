@@ -39,7 +39,7 @@ int main(void) {
     
 //    configs[0] = *si5351a_init_registers;
     
-	unsigned char clksel, old_clksel;
+	uint8_t clksel, old_clksel;
 
     USI_TWI_Master_Initialise();
 
