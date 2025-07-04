@@ -40,11 +40,6 @@ ${DEBUG_TARGET}: ${SOURCES}
 	avr-gcc -Wall -gdwarf-2 -Os -std=gnu99 \
         -mmcu=attiny85 \
         -DF_CPU=8000000 \
-        -fno-inline-small-functions \
-        -ffunction-sections -fdata-sections \
-        -Wl,--relax,--gc-sections \
-        -Wl,--undefined=_mmcu,--section-start=.mmcu=0x910000 \
-        -I${SIMAVR}/simavr/sim/avr -I${SIMAVR}/simavr/sim/avr -I${SIMAVR}/simavr/sim/avr \
         ${SOURCES} \
         -o ${DEBUG_TARGET}
 
@@ -52,9 +47,9 @@ sim: debug
 	simavr -g 1234 -m attiny85 ${DEBUG_TARGET}
 
 clean:
-	rm ${FILENAME}.axf ${TARGET} ${FILENAME}.elf
+	rm ${FILENAME}.axf ${TARGET} ${FILENAME}.elf ${FILENAME}.hex ${FILENAME}.lst
 
-run:
+run: debug all
 	avr-gdb -ex 'target remote :1234' ./${FILENAME}.axf
 
 prog:
